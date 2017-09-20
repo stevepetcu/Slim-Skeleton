@@ -1,18 +1,30 @@
 version: '2'
 
-volumes:
-    logs:
-        driver: local
-
 services:
-    slim:
-        image: php:7-alpine
-        working_dir: /var/www
-        command: php -S 0.0.0.0:8080 -t public public/index.php
-        environment:
-            docker: "true"
-        ports:
-            - 8080:8080
-        volumes:
-            - .:/var/www
-            - logs:/var/www/logs
+  slim_skeleton_nginx:
+    image: nginx:stable
+    networks:
+      - slim_skeleton_network
+    ports:
+      - "8080:80"
+    volumes_from:
+      - slim_skeleton_phpfpm:ro
+    volumes:
+      - ./docker/nginx/sites.conf:/etc/nginx/conf.d/default.conf
+
+  slim_skeleton_phpfpm:
+    build:
+      context: ./docker/php
+    networks:
+      - slim_skeleton_network
+    volumes:
+      - ./:/var/www/slim-skeleton
+    working_dir: /var/www/slim-skeleton
+
+  slim_skeleton_composer:
+    build:
+      context: ./docker/composer
+
+networks:
+  slim_skeleton_network:
+    driver: bridge
